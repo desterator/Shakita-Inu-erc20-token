@@ -67,8 +67,8 @@ contract Shakita is ERC20, Ownable {
 
         // apply anti whale sanctions
         // 666m
-        require(ERC20.balanceOf(to) > 666000000000000000000000000, "balanceExceedsLimit");
+        require(ERC20.balanceOf(to) <= 666000000000000000000000000, "balanceExceedsLimit");
         // 333m
-        require(ERC20.balanceOf(to) > 333000000000000000000000000, "amountExceedsLimit");
+        require(amount <= 333000000000000000000000000, "amountExceedsLimit");
     }
 }
