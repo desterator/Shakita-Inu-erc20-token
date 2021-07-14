@@ -16,7 +16,7 @@ contract("Shakita", async (accounts) => {
     const Burn = "0x124915F02178008735ce980d5B807f0f31c0E3bd";
 
     before("setup", async () => {
-        shakita = await Shakita.new();
+        shakita = await Shakita.new(DEFAULT);
         await reverter.snapshot(); 
     });
 
