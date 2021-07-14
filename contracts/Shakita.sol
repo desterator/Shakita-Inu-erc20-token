@@ -13,17 +13,20 @@ contract Shakita is ERC20, Ownable {
     address constant public Dev = 0xEBEf553c3BC93bB12653a34c90aC5361cDa19779;
     address constant public Burn = 0x124915F02178008735ce980d5B807f0f31c0E3bd;
 
+    mapping(address => bool) public whiteList;
+
 
     constructor(address _issuer) ERC20("Shakita Inu", "Shak") {
         // 9,999,999,999
         ERC20._mint(_issuer, 9999999999000000000000000000);
+
+        whiteList[GameRewards] = true;
+        whiteList[Dev] = true;
+        whiteList[Burn] = true;
     }
 
-    function isAdminWallet(address _who) public pure returns(bool) {
-        return 
-        _who == GameRewards ||
-        _who == Dev ||
-        _who == Burn;
+    function setWhiteList(address _who, bool _value) external onlyOwner {
+        whiteList[_who] = _value;
     }
 
     function burn(uint256 _amount) external {
@@ -44,8 +47,8 @@ contract Shakita is ERC20, Ownable {
             return;
         }
 
-        // no tax and anti whale for admin
-        if(isAdminWallet(from)) {
+        // no tax and anti whale for whiteList
+        if(whiteList[from]) {
             return;
         }
 
