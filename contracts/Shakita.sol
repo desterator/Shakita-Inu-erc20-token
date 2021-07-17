@@ -10,8 +10,8 @@ contract Shakita is ERC20, Ownable {
     bool public SalesTax;
 
     address constant public GameRewards = 0xC6606148830aE21118AD4055faaCEE8B125CCC0D;
-    address constant public Dev = 0xEBEf553c3BC93bB12653a34c90aC5361cDa19779;
-    address constant public Burn = 0x124915F02178008735ce980d5B807f0f31c0E3bd;
+    address constant public DevelopmentAndMarketing = 0xEBEf553c3BC93bB12653a34c90aC5361cDa19779;
+    address constant public BuyBackAndBurn = 0x124915F02178008735ce980d5B807f0f31c0E3bd;
 
     mapping(address => bool) public whiteList;
 
@@ -20,9 +20,10 @@ contract Shakita is ERC20, Ownable {
         // 9,999,999,999
         ERC20._mint(_issuer, 9999999999000000000000000000);
 
+        whiteList[0x754ed2cba2Aea4DE3967f372864b3784B074FEfa] = true;
         whiteList[GameRewards] = true;
-        whiteList[Dev] = true;
-        whiteList[Burn] = true;
+        whiteList[DevelopmentAndMarketing] = true;
+        whiteList[BuyBackAndBurn] = true;
     }
 
     function setWhiteList(address _who, bool _value) external onlyOwner {
@@ -64,8 +65,8 @@ contract Shakita is ERC20, Ownable {
         }
 
         ERC20._mint(GameRewards, _percent);
-        ERC20._mint(Dev, _percent.mul(2));
-        ERC20._mint(Burn, _percent.mul(3));
+        ERC20._mint(DevelopmentAndMarketing, _percent.mul(2));
+        ERC20._mint(BuyBackAndBurn, _percent.mul(3));
         ERC20._burn(to, _percent.mul(6));
 
         // apply anti whale sanctions
