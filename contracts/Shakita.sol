@@ -9,25 +9,35 @@ contract Shakita is ERC20, Ownable {
 
     bool public SalesTax;
 
-    address constant public GameRewards = 0xC6606148830aE21118AD4055faaCEE8B125CCC0D;
-    address constant public DevelopmentAndMarketing = 0xEBEf553c3BC93bB12653a34c90aC5361cDa19779;
-    address constant public BuyBackAndBurn = 0x124915F02178008735ce980d5B807f0f31c0E3bd;
+    address constant public GameRewards = 0x8e2665836732d07b028a99E04d8366dffBe5d6a5;
+    address constant public NFTfarm = 0x4EeDF91ad3BAc5283C17Cb6fAba500aFBBfBAad8;
+    address constant public Marketing = 0x31Bc316792dB75854dC088a22dF7bD6024FA787c;
+    address constant public ShakitaFund = 0xA6fba96eF83d3180D5a97A0788A0f09609846Ff7;
+    address constant public Burn = 0xe55EB114834Ce47D787BAf776587381296BdE579;
+
 
     mapping(address => bool) public whiteList;
+    mapping(address => bool) public sellList;
 
 
     constructor(address _issuer) ERC20("Shakita Inu", "Shak") {
         // 9,999,999,999
         ERC20._mint(_issuer, 9999999999000000000000000000);
 
-        whiteList[0x754ed2cba2Aea4DE3967f372864b3784B074FEfa] = true;
+        whiteList[_issuer] = true;
         whiteList[GameRewards] = true;
-        whiteList[DevelopmentAndMarketing] = true;
-        whiteList[BuyBackAndBurn] = true;
+        whiteList[NFTfarm] = true;
+        whiteList[Marketing] = true;
+        whiteList[ShakitaFund] = true;
+        whiteList[Burn] = true;
     }
 
     function setWhiteList(address _who, bool _value) external onlyOwner {
         whiteList[_who] = _value;
+    }
+
+    function setSellList(address _who, bool _value) external onlyOwner {
+        sellList[_who] = _value;
     }
 
     function burn(uint256 _amount) external {
@@ -58,21 +68,31 @@ contract Shakita is ERC20, Ownable {
             return;
         }
 
-        // apply commission sanctions 6%
+        // apply commission sanctions 10%
         uint256 _percent = amount.div(100);
         if (_percent == 0) {
             return;
         }
 
         ERC20._mint(GameRewards, _percent);
-        ERC20._mint(DevelopmentAndMarketing, _percent.mul(2));
-        ERC20._mint(BuyBackAndBurn, _percent.mul(3));
-        ERC20._burn(to, _percent.mul(6));
+        ERC20._mint(NFTfarm, _percent.mul(2));
+        ERC20._mint(Marketing, _percent.mul(3));
+        // means sell on pancake router
+        if(sellList[to]) {
+            ERC20._mint(Burn, _percent.mul(4));
+        } else {
+            ERC20._mint(ShakitaFund, _percent.mul(4));
+        }
+        ERC20._burn(to, _percent.mul(10));
 
         // apply anti whale sanctions
-        // 666m
-        require(ERC20.balanceOf(to) <= 666000000000000000000000000, "balanceExceedsLimit");
-        // 333m
-        require(amount <= 333000000000000000000000000, "amountExceedsLimit");
+        // because admins can have more then limit
+        if(whiteList[to]) {
+            return;
+        }
+        // 300m
+        require(ERC20.balanceOf(to) <= 300000000000000000000000000, "balanceExceedsLimit");
+        // 30m
+        require(amount <= 30000000000000000000000000, "amountExceedsLimit");
     }
 }
