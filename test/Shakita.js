@@ -39,10 +39,6 @@ contract("Shakita", async (accounts) => {
         factory = await Factory.at(await router.factory());
         weth = await IBEP20.at(await router.WETH());
 
-        await weth.approve(router.address, "100000000000010000000000001000000000000");
-        await weth.deposit({value: "90000000000000000000"});
-        await shakita.approve(router.address, "100000000000010000000000001000000000000");
-
         await reverter.snapshot(); 
     });
 
@@ -64,6 +60,17 @@ contract("Shakita", async (accounts) => {
             assert.isFalse(await shakita.SalesTax());
         });
     });
+    describe("changeAtniWhale", async () => {
+        it("should change state", async () => {
+            assert.isFalse(await shakita.AtniWhale());
+
+            await shakita.changeAtniWhale();
+            assert.isTrue(await shakita.AtniWhale());
+
+            await shakita.changeAtniWhale();
+            assert.isFalse(await shakita.AtniWhale());
+        });
+    });
     describe("_afterTokenTransfer", async () => {
         it("should make transfer with commision", async () => {
             await shakita.changeSalesTax();
@@ -77,16 +84,16 @@ contract("Shakita", async (accounts) => {
             assert.equal(4, (await shakita.balanceOf(ShakitaFund)).toString());
         });
         it("should get exception, balance exceeds limit", async () => {
-            await shakita.changeSalesTax();
+            await shakita.changeAtniWhale();
             await shakita.setWhiteList(DEFAULT, false);
             
-            for(let i = 0; i < 11; ++i) {
+            for(let i = 0; i < 10; ++i) {
                 await shakita.transfer(ALICE, "30000000000000000000000000");
             }
-            await truffleAssert.reverts(shakita.transfer(ALICE, "30000000000000000000000000"), "balanceExceedsLimit");
+            await truffleAssert.reverts(shakita.transfer(ALICE, "1"), "balanceExceedsLimit");
         });
         it("should get exception, amount exceeds limit", async () => {
-            await shakita.changeSalesTax();
+            await shakita.changeAtniWhale();
             await shakita.setWhiteList(DEFAULT, false);
 
             await truffleAssert.reverts(shakita.transfer(ALICE, "30000000000000000000000001"), "amountExceedsLimit");
@@ -97,6 +104,10 @@ contract("Shakita", async (accounts) => {
         it("should add liqudity, but shakita, then sell shakita", async () => {
             await shakita.changeSalesTax();
             await shakita.setWhiteList(DEFAULT, false);
+
+            await weth.approve(router.address, "100000000000010000000000001000000000000");
+            await weth.deposit({value: "90000000000000000000"});
+            await shakita.approve(router.address, "100000000000010000000000001000000000000");
 
             const amount = toBN("90000000000000000000");
             await router.addLiquidity(shakita.address,
