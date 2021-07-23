@@ -31,6 +31,7 @@ contract("Shakita", async (accounts) => {
 
     const deadline = "100000000000010000000000001000000000000";
     const routerAddress = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
+    const busd = "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56";
 
 
     before("setup", async () => {
@@ -47,6 +48,10 @@ contract("Shakita", async (accounts) => {
     describe("constructor", async () => {
         it("should get correct emission", async () => {
             assert.equal("9999999999000000000000000000", (await shakita.balanceOf(DEFAULT)).toString());
+        });
+        it("should make right calculation of pair shakita busd", async() => {
+            await factory.createPair(busd, shakita.address);
+            assert.equal(await shakita.pair(), await factory.getPair(busd, shakita.address));
         });
     });
     describe("changeSalesTax", async () => {

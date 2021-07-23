@@ -16,14 +16,25 @@ contract Shakita is ERC20, Ownable {
     address constant public ShakitaFund = 0xA6fba96eF83d3180D5a97A0788A0f09609846Ff7;
     address constant public Burn = 0xe55EB114834Ce47D787BAf776587381296BdE579;
 
+    address constant public BUSD = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
+    address public pair;
 
     mapping(address => bool) public whiteList;
     mapping(address => bool) public sellList;
 
-
     constructor(address _issuer) ERC20("Shakita Inu", "Shak") {
         // 9,999,999,999
         ERC20._mint(_issuer, 9999999999000000000000000000);
+        
+
+        (address token0, address token1) = address(this) < BUSD ? (address(this), BUSD) : (BUSD, address(this));
+
+        pair = address(uint160(uint256(bytes32(keccak256(abi.encodePacked(
+               hex'ff',
+               0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73, // factory
+               keccak256(abi.encodePacked(token0, token1)),
+               hex'00fb7f630766e6a796048ea87d01acd3068e8ff67d078148a3fa3f4a84f69bd5' // init code hash
+        ))))));
 
         whiteList[_issuer] = true;
         whiteList[GameRewards] = true;
