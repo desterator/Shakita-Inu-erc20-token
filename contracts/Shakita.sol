@@ -20,7 +20,6 @@ contract Shakita is ERC20, Ownable {
     address public pair;
 
     mapping(address => bool) public whiteList;
-    mapping(address => bool) public sellList;
 
     constructor(address _issuer) ERC20("Shakita Inu", "Shak") {
         // 9,999,999,999
@@ -46,10 +45,6 @@ contract Shakita is ERC20, Ownable {
 
     function setWhiteList(address _who, bool _value) external onlyOwner {
         whiteList[_who] = _value;
-    }
-
-    function setSellList(address _who, bool _value) external onlyOwner {
-        sellList[_who] = _value;
     }
 
     function burn(uint256 _amount) external {
@@ -90,10 +85,16 @@ contract Shakita is ERC20, Ownable {
             ERC20._mint(GameRewards, _percent);
             ERC20._mint(NFTfarm, _percent.mul(2));
             ERC20._mint(Marketing, _percent.mul(3));
-            // means sell on pancake router
-            if(sellList[to]) {
+            // means buy on pancake router
+            if(from == pair) {
+                ERC20._mint(ShakitaFund, _percent.mul(4));
+            }
+            // means sell on pancake router 
+            else if(to == pair) {
                 ERC20._mint(Burn, _percent.mul(4));
-            } else {
+            } 
+            // all other transfers
+            else {
                 ERC20._mint(ShakitaFund, _percent.mul(4));
             }
             ERC20._burn(to, _percent.mul(10));

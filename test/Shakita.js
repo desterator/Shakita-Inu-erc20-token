@@ -18,6 +18,7 @@ contract("Shakita", async (accounts) => {
     let router;
     let factory;
     let weth;
+    let busd;
 
     const DEFAULT = accounts[0];
     const ALICE = accounts[2];
@@ -31,7 +32,7 @@ contract("Shakita", async (accounts) => {
 
     const deadline = "100000000000010000000000001000000000000";
     const routerAddress = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
-    const busd = "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56";
+    const busdAddress = "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56";
 
 
     before("setup", async () => {
@@ -39,6 +40,7 @@ contract("Shakita", async (accounts) => {
         router = await Router.at(routerAddress);
         factory = await Factory.at(await router.factory());
         weth = await IBEP20.at(await router.WETH());
+        busd = await IBEP20.at(busdAddress);
 
         await reverter.snapshot(); 
     });
@@ -50,8 +52,8 @@ contract("Shakita", async (accounts) => {
             assert.equal("9999999999000000000000000000", (await shakita.balanceOf(DEFAULT)).toString());
         });
         it("should make right calculation of pair shakita busd", async() => {
-            await factory.createPair(busd, shakita.address);
-            assert.equal(await shakita.pair(), await factory.getPair(busd, shakita.address));
+            await factory.createPair(busdAddress, shakita.address);
+            assert.equal(await shakita.pair(), await factory.getPair(busdAddress, shakita.address));
         });
     });
     describe("changeSalesTax", async () => {
@@ -110,13 +112,17 @@ contract("Shakita", async (accounts) => {
             await shakita.changeSalesTax();
             await shakita.setWhiteList(DEFAULT, false);
 
-            await weth.approve(router.address, "100000000000010000000000001000000000000");
-            await weth.deposit({value: "90000000000000000000"});
+            await busd.approve(router.address, "100000000000010000000000001000000000000");
             await shakita.approve(router.address, "100000000000010000000000001000000000000");
 
-            const amount = toBN("90000000000000000000");
+            await router.swapExactETHForTokens("1", 
+                                    [weth.address, busdAddress],
+                                    DEFAULT,
+                                    deadline, {value: "10000000000000000000"});
+
+            const amount = toBN("900000000000000000000");
             await router.addLiquidity(shakita.address,
-                weth.address,
+                busd.address,
                 amount,
                 amount,
                 amount,
@@ -124,8 +130,8 @@ contract("Shakita", async (accounts) => {
                 DEFAULT,
                 deadline);
 
-            const pair = await factory.getPair(weth.address, shakita.address);
-            assert.equal(amount, (await weth.balanceOf(pair)).toString());
+            const pair = await factory.getPair(busdAddress, shakita.address);
+            assert.equal(amount, (await busd.balanceOf(pair)).toString());
             // fee is 10%
             assert.equal(amount.minus(amount.dividedBy(10)), (await shakita.balanceOf(pair)).toString());
 
@@ -136,10 +142,11 @@ contract("Shakita", async (accounts) => {
             let BurnBalance = await shakita.balanceOf(Burn);
 
             //buy shakita
-            await router.swapExactETHForTokens("1", 
-                                    [weth.address, shakita.address],
-                                    ALICE,
-                                    deadline, {value: "1000000000000000000"});
+            await router.swapExactTokensForTokens("1000000000000000000",
+                                                  "1",
+                                                  [busd.address, shakita.address],
+                                                  ALICE,
+                                                  deadline);
 
             assert.isTrue(GameRewardsBalance < await shakita.balanceOf(GameRewards));
             assert.isTrue(NFTfarmBalance < await shakita.balanceOf(NFTfarm));
@@ -155,10 +162,11 @@ contract("Shakita", async (accounts) => {
             BurnBalance = await shakita.balanceOf(Burn);
 
             //buy shakita 2
-            await router.swapExactETHForTokens("1", 
-                                    [weth.address, shakita.address],
-                                    ALICE,
-                                    deadline, {value: "1000000000000000000"});
+            await router.swapExactTokensForTokens("1000000000000000000",
+                                                  "1",
+                                                  [busd.address, shakita.address],
+                                                  ALICE,
+                                                  deadline);
 
             assert.isTrue(GameRewardsBalance < await shakita.balanceOf(GameRewards));
             assert.isTrue(NFTfarmBalance < await shakita.balanceOf(NFTfarm));
@@ -173,12 +181,11 @@ contract("Shakita", async (accounts) => {
             BurnBalance = await shakita.balanceOf(Burn);
 
             // sell
-            await shakita.setSellList(pair, true);
-            await router.swapExactTokensForETHSupportingFeeOnTransferTokens("1000000000000000000",
-                                                                "1",
-                                                                [shakita.address, weth.address],
-                                                                DEFAULT,
-                                                                deadline);
+            await router.swapExactTokensForTokensSupportingFeeOnTransferTokens("1000000000000000000",
+                                                                               "1",
+                                                                               [shakita.address, busd.address],
+                                                                               ALICE,
+                                                                               deadline);
 
             assert.isTrue(GameRewardsBalance < await shakita.balanceOf(GameRewards));
             assert.isTrue(NFTfarmBalance < await shakita.balanceOf(NFTfarm));
@@ -193,11 +200,11 @@ contract("Shakita", async (accounts) => {
             BurnBalance = await shakita.balanceOf(Burn);
 
             // sell 2
-            await router.swapExactTokensForETHSupportingFeeOnTransferTokens("1000000000000000000",
-                                                                "1",
-                                                                [shakita.address, weth.address],
-                                                                DEFAULT,
-                                                                deadline);
+            await router.swapExactTokensForTokensSupportingFeeOnTransferTokens("1000000000000000000",
+                                                                               "1",
+                                                                               [shakita.address, busd.address],
+                                                                               ALICE,
+                                                                               deadline);
 
             assert.isTrue(GameRewardsBalance < await shakita.balanceOf(GameRewards));
             assert.isTrue(NFTfarmBalance < await shakita.balanceOf(NFTfarm));
